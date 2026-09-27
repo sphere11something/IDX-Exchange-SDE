@@ -1,6 +1,12 @@
-.DS_Store
-.env
-pycache/
+# whitelist: only app code is published
+/*
+!/.gitignore
+!/README.md
+!/backend/
+!/frontend/
+!/readme-assets/
 node_modules/
-*.csv
-*.log
+dist/
+.env
+*.sql
+.DS_Store

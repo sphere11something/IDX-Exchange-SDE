@@ -1,0 +1,27 @@
+.side{position:fixed;left:0;top:0;bottom:0;width:52px;border-right:1px solid #cdcdd3;background:#fff;z-index:5;padding-top:64px;display:flex;flex-direction:column;gap:22px;align-items:center;font-size:9px;color:#535364;text-align:center}.side svg{display:block;width:24px;height:24px;margin:0 auto 2px;color:#2a2a37}.side div{font-size:10px}
+.filterbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #e2e2e6}
+.searchbox{display:flex;align-items:center;flex:0 0 320px;height:40px;border:1px solid #cdcdd3;border-radius:8px;padding:0 12px;color:#111}
+.searchbox span{margin-left:auto;color:#535364}
+.chip{height:40px;display:flex;align-items:center;gap:6px;border:1px solid #cdcdd3;border-radius:8px;padding:0 14px;font-size:14px;font-weight:600;white-space:nowrap}
+.chip.on{border-color:#0041D9;color:#0041D9;background:#eef2ff}
+.save{margin-left:auto;background:#0041D9;color:#fff!important;border-radius:8px;padding:0 18px;height:40px;display:flex;align-items:center;font-weight:700}
+.results{display:flex}
+.mapcol{flex:0 0 46%;height:calc(100vh - 105px);position:sticky;top:105px;background:#e5e3df center/cover;border-right:1px solid #e2e2e6}
+.listcol{flex:1;padding:20px 24px}
+.listcol h1{font-size:22px;margin:0 0 2px}
+.listcol .count{font-size:13px;color:#535364;display:flex;justify-content:space-between;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{border-radius:10px;overflow:hidden;box-shadow:0 1px 4px #0002;background:#fff}
+.card .ph{height:190px;background:#ddd center/cover;position:relative}
+.card .heart{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;background:#fff9;display:flex;align-items:center;justify-content:center}
+.card .in{padding:10px 12px}
+.card .price{font-size:19px;font-weight:800}
+.card .meta{font-size:13px;color:#222;margin:4px 0}
+.card .addr{font-size:13px;color:#222}
+.card .broker{font-size:10px;color:#8a8a96;margin-top:6px;text-transform:uppercase}
+.fl{text-align:center;font-size:11px;padding:18px 22px;line-height:2}.fl a{margin:0 9px}.legal{text-align:center;font-size:8px;color:#535364;max-width:520px;margin:0 auto 16px;line-height:1.5;padding:0 12px}.legal a{color:#0041D9;text-decoration:underline}
+.bot{text-align:center;font-size:11px;padding:8px 0 40px}
+.sale header{position:relative;left:0;top:0;border-bottom:1px solid #e2e2e6}
+.sale .grid{grid-template-columns:1fr 1fr}
+.pin{transform:translate(-50%,-100%);background:#0041D9;color:#fff;font:700 12px/1 Inter,Arial,sans-serif;padding:6px 8px;border-radius:14px;border:2px solid #fff;box-shadow:0 1px 4px #0006;white-space:nowrap;cursor:pointer;width:max-content}
+.pin:hover{background:#111;z-index:9999}
