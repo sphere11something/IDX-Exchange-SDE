@@ -10,3 +10,4 @@ dist/
 .env
 *.sql
 .DS_Store
+!backend/sql/*.sql
