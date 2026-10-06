@@ -52,6 +52,25 @@ Check http://localhost:5001/api/health -> `{"status":"ok","database":"connected"
 Endpoints: `GET /api/health`, `GET /api/properties`, `GET /api/properties/map`,
 `GET /api/properties/:id`, `GET /api/cities`.
 
+### `GET /api/properties` (Week 3)
+```
+GET /api/properties?city=Irvine&minPrice=300000&beds=3&limit=20&offset=0
+-> { "total": 87, "limit": 20, "offset": 0, "results": [...] }
+```
+| Param | Rules |
+|-------|-------|
+| `limit` | integer 1-100, default 20 |
+| `offset` | integer >= 0, default 0 (`page` is accepted as a legacy alias) |
+| `city` | case/space-insensitive match |
+| `zipcode` | 5 digits |
+| `minPrice`, `maxPrice` | non-negative numbers, `minPrice <= maxPrice` |
+| `beds`, `baths` | minimums (`>=`) |
+| `sort` | `newest` (default), `price_asc`, `price_desc` |
+
+Invalid input returns `400 { "error": "Invalid query parameters", "details": ["limit must be between 1 and 100", ...] }`.
+Indexes: `backend/sql/week3_indexes.sql`; EXPLAIN notes: `backend/docs/week3-explain.md`.
+Tests: `cd backend && npm test` (no database needed).
+
 `GET /api/properties` and `/api/properties/map` accept `category=rent` (or `sale`) to
 scope results to lease vs. for-sale listings, based on `L_Type_`. Which type strings count
 as rentals is configured via `RENTAL_PROPERTY_TYPES` in `backend/.env` (defaults to
