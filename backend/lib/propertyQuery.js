@@ -24,6 +24,23 @@ const SUMMARY = `L_ListingID id, L_Address address, L_City city, L_State state, 
   (SELECT MIN(CONCAT(o.OpenHouseDate,' ',o.OH_StartTime,'|',o.OH_EndTime)) FROM rets_openhouse o WHERE o.L_ListingID = rets_property.L_ListingID AND o.OpenHouseDate >= CURDATE()) nextOpen,
   LMD_MP_Latitude lat, LMD_MP_Longitude lng, YearBuilt yearBuilt, L_Photos photos`;
 
+// Listing IDs are short alphanumeric MLS ids. Anything else (slashes, spaces, quotes,
+// very long strings) can never match a row, so reject it before it reaches the database.
+const MAX_ID_LENGTH = 20;
+const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * Validate the :id route parameter.
+ * Returns { error: string|null, id: string|undefined }.
+ */
+function parseListingId(raw) {
+  if (typeof raw !== 'string' || raw.trim() === '') return { error: 'Listing ID is required' };
+  const id = raw.trim();
+  if (id.length > MAX_ID_LENGTH) return { error: `Listing ID must be at most ${MAX_ID_LENGTH} characters` };
+  if (!ID_PATTERN.test(id)) return { error: 'Listing ID may only contain letters, digits, hyphens and underscores' };
+  return { error: null, id };
+}
+
 /**
  * Validate and normalise req.query.
  * Returns { errors: string[], params } — params is only meaningful when errors is empty.
@@ -139,5 +156,6 @@ function buildWhere(filters = {}, rentalTypes = RENTAL_TYPES) {
 }
 
 module.exports = {
-  DEFAULT_LIMIT, MAX_LIMIT, SORTS, RENTAL_TYPES, SUMMARY, parsePhotos, parseQuery, buildWhere,
+  DEFAULT_LIMIT, MAX_LIMIT, MAX_ID_LENGTH, SORTS, RENTAL_TYPES, SUMMARY,
+  parsePhotos, parseQuery, parseListingId, buildWhere,
 };

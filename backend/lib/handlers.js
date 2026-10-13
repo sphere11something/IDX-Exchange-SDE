@@ -1,9 +1,12 @@
 'use strict';
 // Handler factories take the pool as an argument so tests can pass a fake one.
-const { SORTS, RENTAL_TYPES, SUMMARY, parsePhotos, parseQuery, buildWhere } = require('./propertyQuery');
+const { SORTS, RENTAL_TYPES, SUMMARY, parsePhotos, parseQuery, parseListingId, buildWhere } = require('./propertyQuery');
 
 const badRequest = (res, errors) =>
   res.status(400).json({ error: 'Invalid query parameters', details: errors });
+
+const badId = (res, message) =>
+  res.status(400).json({ error: 'Invalid listing ID', message });
 
 // GET /api/properties
 const listProperties = (pool) => async (req, res) => {
@@ -42,20 +45,47 @@ const mapProperties = (pool) => async (req, res) => {
 
 // GET /api/properties/:id
 const getProperty = (pool) => async (req, res) => {
+  const { error, id } = parseListingId(req.params.id);
+  if (error) return badId(res, error);
   try {
     const [rows] = await pool.query(
-      `SELECT ${SUMMARY}, L_Remarks remarks, LotSizeAcres lotAcres FROM rets_property WHERE L_ListingID = ?`, [req.params.id]);
-    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+      `SELECT ${SUMMARY}, L_Remarks remarks, LotSizeAcres lotAcres FROM rets_property WHERE L_ListingID = ?`, [id]);
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Not found', message: `No property found with listing ID ${id}` });
+    }
     const p = rows[0]; p.photos = parsePhotos(p.photos); p.forRent = RENTAL_TYPES.includes(p.type);
     const [oh] = await pool.query(
       `SELECT OpenHouseDate date, OH_StartTime startTime, OH_EndTime endTime, all_data FROM rets_openhouse
-       WHERE L_ListingID = ? AND OpenHouseDate >= CURDATE() ORDER BY OpenHouseDate`, [req.params.id]);
-    p.openHouses = oh.map(({ all_data, ...o }) => {
-      let remarks = null; try { remarks = JSON.parse(all_data).OpenHouseRemarks || null; } catch {}
-      return { ...o, remarks };
-    });
+       WHERE L_ListingID = ? AND OpenHouseDate >= CURDATE() ORDER BY OpenHouseDate, OH_StartTime`, [id]);
+    p.openHouses = oh.map(({ all_data, ...o }) => ({ ...o, remarks: openHouseRemarks(all_data) }));
     res.json(p);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
 };
 
-module.exports = { listProperties, mapProperties, getProperty };
+// all_data is a JSON blob. mysql2 hands back an object for a JSON column and a string for a
+// TEXT column, and either can be NULL or malformed, so never assume which one we got.
+function openHouseRemarks(allData) {
+  try {
+    const parsed = typeof allData === 'string' ? JSON.parse(allData) : allData;
+    return (parsed && parsed.OpenHouseRemarks) || null;
+  } catch { return null; }
+}
+
+// GET /api/properties/:id/openhouses
+// Verify the property exists first (404 vs. "exists but has no open houses" = empty array),
+// then return its events ordered by date and start time. all_data is returned as-is.
+const getOpenHouses = (pool) => async (req, res) => {
+  const { error, id } = parseListingId(req.params.id);
+  if (error) return badId(res, error);
+  try {
+    const [props] = await pool.query('SELECT L_ListingID FROM rets_property WHERE L_ListingID = ? LIMIT 1', [id]);
+    if (!props.length) {
+      return res.status(404).json({ error: 'Not found', message: `No property found with listing ID ${id}` });
+    }
+    const [rows] = await pool.query(
+      `SELECT * FROM rets_openhouse WHERE L_ListingID = ? ORDER BY OpenHouseDate ASC, OH_StartTime ASC`, [id]);
+    res.json(rows);
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
+};
+
+module.exports = { listProperties, mapProperties, getProperty, getOpenHouses };
