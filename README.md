@@ -23,6 +23,15 @@ Switch between the two site styles with the Zillow | Redfin toggle in the header
 - Property detail page: photos, remarks, upcoming open houses, map (shows `/mo` pricing for rentals)
 - Mortgage payment calculator; Sell, Find an agent, etc. show "Coming soon"
 
+## Week 5: Listings page (`/listings`)
+A plain grid of property cards, built per the Week 5 requirements of the challenge guide.
+- `frontend/src/api/client.js`: `fetchProperties(params)` and `fetchPropertyDetail(id)`. All fetch/HTTP error handling lives here and throws user-readable messages.
+- `frontend/src/pages/ListingsPage.jsx`: loading state, error state with a Try again button, and a "Showing 20 of 487 properties" count.
+- `frontend/src/components/PropertyCard.jsx`: first photo, price, address, city/state, beds, baths, sqft, hover effect. Links to `/property/:id`.
+- `frontend/src/utils/photos.js`: `parsePhotos` never throws; handles null, empty string, malformed JSON and non-array values. Cards fall back to "No photo available" when an image is missing or fails to load.
+- `frontend/src/utils/format.js`: hides null/zero beds, baths, sqft and shows "Price unavailable" for null/zero price.
+- The `/api` proxy to Express (port 5001) is configured in `frontend/vite.config.js`.
+
 ## Prerequisites
 Node.js (LTS), npm, Docker Desktop, and the two data files `rets_property.sql` and
 `rets_openhouse.sql` (not included in this repo; obtain them from your IDX Exchange contact).
