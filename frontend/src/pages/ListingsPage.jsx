@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchProperties } from '../api/client.js'
 import PropertyCard from '../components/PropertyCard.jsx'
-import '../listings.css'
+import Shell from '../ui/Chrome.jsx'
+import { Loading, Notice } from '../ui/bits.jsx'
 
 const PAGE_SIZE = 20
 
@@ -26,29 +27,34 @@ export default function ListingsPage() {
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
   return (
-    <main className="lp-page">
-      <h1>Property Listings</h1>
+    <Shell>
+      <div className="lp-page">
+        <h1>Property listings</h1>
 
-      {loading && <div className="lp-status" role="status"><div className="lp-spinner" />Loading properties...</div>}
+        {loading && <Loading>Loading properties</Loading>}
 
-      {!loading && error && (
-        <div className="lp-error" role="alert">
-          <strong>Couldn't load properties.</strong>
-          <p>{error}</p>
-          <button type="button" onClick={retry}>Try again</button>
-        </div>
-      )}
+        {!loading && error && (
+          <Notice title="Couldn't load properties." message={error} onRetry={retry} />
+        )}
 
-      {!loading && !error && data && (
-        <>
-          <p className="lp-count">
-            Showing {data.results.length.toLocaleString()} of {data.total.toLocaleString()} properties
-          </p>
-          {data.results.length === 0
-            ? <p className="lp-status">No properties found.</p>
-            : <div className="lp-grid">{data.results.map((p) => <PropertyCard key={p.id} property={p} />)}</div>}
-        </>
-      )}
-    </main>
+        {!loading && !error && data && (
+          <>
+            <p className="lp-count num">
+              Showing {data.results.length.toLocaleString()} of {data.total.toLocaleString()}{' '}
+              properties
+            </p>
+            {data.results.length === 0 ? (
+              <p className="status">No properties found.</p>
+            ) : (
+              <div className="grid">
+                {data.results.map((p) => (
+                  <PropertyCard key={p.id} property={p} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Shell>
   )
 }

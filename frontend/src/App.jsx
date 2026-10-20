@@ -1,7 +1,29 @@
-import { Routes, Route } from 'react-router-dom'
-import { RfHome, RfSearch, RfDetail } from './Redfin.jsx'
+import { Route, Routes } from 'react-router-dom'
+import HomePage from './pages/HomePage.jsx'
+import SearchPage from './pages/SearchPage.jsx'
+import DetailPage from './pages/DetailPage.jsx'
 import ListingsPage from './pages/ListingsPage.jsx'
-import { Home, ForSale, ForRent, Detail, Simple } from './Zillow.jsx'
+import StaticPage from './pages/StaticPage.jsx'
+import { DARK_BASE } from './site.js'
+
+// The same pages are mounted twice: at the root in the light style, and under
+// /redfin in the dark style. The header switch moves between the two trees.
+const tree = (prefix, searchPath) => (
+  <>
+    <Route path={prefix || '/'} element={<HomePage />} />
+    <Route path={prefix + searchPath} element={<SearchPage category="sale" />} />
+    <Route path={prefix + '/rent'} element={<SearchPage category="rent" />} />
+    <Route path={prefix + '/property/:id'} element={<DetailPage />} />
+    <Route path={prefix + '/:page'} element={<StaticPage />} />
+  </>
+)
+
 export default function App() {
-  return <Routes><Route path="/" element={<Home />} /><Route path="/listings" element={<ListingsPage />} /><Route path="/for-sale" element={<ForSale />} /><Route path="/rent" element={<ForRent />} /><Route path="/property/:id" element={<Detail />} /><Route path="/redfin" element={<RfHome />} /><Route path="/redfin/homes" element={<RfSearch />} /><Route path="/redfin/property/:id" element={<RfDetail />} /><Route path="/:page" element={<Simple />} /></Routes>
+  return (
+    <Routes>
+      <Route path="/listings" element={<ListingsPage />} />
+      {tree('', '/for-sale')}
+      {tree(DARK_BASE, '/homes')}
+    </Routes>
+  )
 }

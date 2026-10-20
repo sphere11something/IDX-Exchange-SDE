@@ -1,27 +1,34 @@
 # IDX Exchange
 
-A Zillow-style property search app backed by real MLS (IDX) data.
+A property search app backed by real MLS (IDX) data.
 React (Vite) -> Express API -> MySQL 8. React never talks to MySQL directly.
 
-Switch between the two site styles with the Zillow | Redfin toggle in the header.
+Two visual styles share the same pages: the light style at `/` and the dark style
+under `/redfin`. Switch with the Light | Dark control in the header; it keeps your
+current page and query string.
 
-### Zillow style
-![Zillow home page](readme-assets/zillow-home.jpg)
+![Home page, light style](readme-assets/home-light.jpg)
 
-![Zillow search results with map pins](readme-assets/zillow-search.jpg)
+![Search results with map pins, dark style](readme-assets/search-dark.jpg)
 
-### Redfin style (`/redfin`)
-![Redfin home page](readme-assets/redfin-home.jpg)
-
-![Redfin search results with map pins](readme-assets/redfin-search.jpg)
+### Frontend layout
+- `src/styles/base.css` — design tokens (color, type, spacing) and element defaults. The dark
+  style is the same tokens redefined under `[data-theme="dark"]`.
+- `src/styles/app.css` — every component style.
+- `src/site.js` — maps a path in one style tree to the same page in the other.
+- `src/ui/Chrome.jsx` — header, footer, style switch, page frame.
+- `src/ui/bits.jsx` — loading, error, filter bar and pagination.
+- `src/pages/` — `HomePage`, `SearchPage` (serves both `/for-sale` and `/rent`),
+  `DetailPage`, `MortgagePage`, `StaticPage`, `ListingsPage`.
+- `src/components/PropertyCard.jsx` — the one listing card, used everywhere.
 
 ## Features
-- Home page with trending listings and open-house badges
+- Home page with the lowest-priced active listings and open-house badges
 - `/for-sale` search: city/ZIP/address, price, beds, baths, type, sort, pagination
-- `/rent` search: same filters/layout as `/for-sale`, scoped to lease listings (see `RENTAL_PROPERTY_TYPES` below)
+- `/rent` search: same filters and layout as `/for-sale`, scoped to lease listings (see `RENTAL_PROPERTY_TYPES` below)
 - Interactive map showing every matching listing as a price pin (Leaflet + OpenStreetMap, no API key)
 - Property detail page: photos, remarks, upcoming open houses, map (shows `/mo` pricing for rentals)
-- Mortgage payment calculator; Sell, Find an agent, etc. show "Coming soon"
+- Mortgage payment calculator; Sell, Find an agent and the other nav pages say they are not built yet
 
 ## Week 5: Listings page (`/listings`)
 A plain grid of property cards, built per the Week 5 requirements of the challenge guide.

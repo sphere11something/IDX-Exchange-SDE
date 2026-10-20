@@ -1,0 +1,168 @@
+/* Design tokens and element defaults. Two themes: the default (light "Index") and
+   [data-theme="dark"] (the "Plate" style served under /redfin). */
+
+:root {
+  --paper: #edf1ee;
+  --surface: #ffffff;
+  --surface-sunk: #e4eae5;
+  --ink: #0f2b22;
+  --ink-soft: #5c6f66;
+  --ink-faint: #8a9a92;
+  --line: #ccd8d0;
+  --line-strong: #0f2b22;
+  --accent: #1f6f4f;
+  --accent-ink: #ffffff;
+  --accent-wash: #e2ede7;
+  --signal: #f2b705;
+  --signal-ink: #2a2000;
+  --danger: #8a2a1b;
+  --danger-wash: #f7e4e0;
+
+  --grid: rgba(15, 43, 34, 0.055);
+  --shadow-lift: 0 10px 24px -14px rgba(15, 43, 34, 0.45);
+
+  --r: 3px;
+  --r-lg: 6px;
+
+  --display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  --ui: 'Instrument Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+
+  --header-h: 68px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --maxw: 1340px;
+}
+
+[data-theme='dark'] {
+  --paper: #0c1512;
+  --surface: #15211c;
+  --surface-sunk: #101a16;
+  --ink: #e8f0ea;
+  --ink-soft: #9db0a6;
+  --ink-faint: #6e8178;
+  --line: #27362e;
+  --line-strong: #4fbf8b;
+  --accent: #4fbf8b;
+  --accent-ink: #06110c;
+  --accent-wash: #16281f;
+  --signal: #f2b705;
+  --signal-ink: #221a00;
+  --danger: #ff9c86;
+  --danger-wash: #2a1611;
+
+  --grid: rgba(232, 240, 234, 0.045);
+  --shadow-lift: 0 10px 24px -14px rgba(0, 0, 0, 0.8);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(28px, 3.4vw, 44px);
+}
+h2 {
+  font-size: clamp(22px, 2.4vw, 30px);
+}
+h3 {
+  font-size: 20px;
+}
+
+p {
+  margin: 0;
+  max-width: 68ch;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--signal-ink);
+}
+
+/* Numbers are the content here: keep them aligned and unambiguous. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* The survey grid: the one piece of decoration, and it earns its place by
+   echoing the plat maps this data comes from. */
+.gridfield {
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
