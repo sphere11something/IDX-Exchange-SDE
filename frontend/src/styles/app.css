@@ -839,6 +839,49 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* ---------- Week 6 filter form ---------- */
+
+.pf {
+  display: grid;
+  gap: 14px;
+  padding: 18px 0 22px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pf__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.pf__item {
+  min-width: 0;
+}
+
+.pf__item .field,
+.pf__item .select {
+  width: 100%;
+}
+
+.pf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .pf__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .pf__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1040px) {

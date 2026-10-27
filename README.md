@@ -39,6 +39,21 @@ A plain grid of property cards, built per the Week 5 requirements of the challen
 - `frontend/src/utils/format.js`: hides null/zero beds, baths, sqft and shows "Price unavailable" for null/zero price.
 - The `/api` proxy to Express (port 5001) is configured in `frontend/vite.config.js`.
 
+## Week 6: Filters UI + testing (`/listings`)
+- `frontend/src/components/PropertyFilters.jsx`: controlled form with city, ZIP, min price, max price, beds and baths. All six values live in one state object updated with the spread operator. Submitting calls `onSearch` with only the non-empty values (`utils/filters.js` `compactFilters`), so the API never receives `?beds=`. **Clear Filters** resets the form and calls `onClear`.
+- `frontend/src/pages/ListingsPage.jsx`: holds the submitted filters in state; an effect fetches whenever they change. Filters combine (`city` + `minPrice` + `beds` ...). Zero results shows a helpful "No properties found" message.
+- `frontend/src/api/client.js`: `fetchProperties(params, { signal })` accepts an `AbortSignal`; an abort is rethrown as `AbortError` instead of being reported as "server unreachable".
+- Tests (Vitest + Testing Library, run with `cd frontend && npm test`):
+  `src/api/client.test.js` (URL building, empty values dropped, success, 400/404/500, network failure, abort) and
+  `src/components/PropertyFilters.test.jsx` (six inputs render, combined submit, empty values omitted, Clear resets).
+
+**Debug challenge: why the first results flashed.** Every Search or Clear starts a request, and responses do not always come back in the order they were sent. The slow response from the first search ("Irvine") could arrive after Clear and after the second Search had started, so it called `setData` and briefly showed old results until the newer response replaced them. The fix is in the effect: its cleanup runs `controller.abort()` before the next request starts, and every `.then/.catch/.finally` checks `signal.aborted` before touching state. Only the latest request can write to state.
+
+**Concepts.**
+- *Unit test*: a small automated check of one piece of code (a function or component) in isolation, with a clear expected result.
+- *Mocking*: replacing a real dependency with a stand-in you control (`vi.fn()`, which is Jest's `jest.fn()`), so a test decides what the dependency returns and can check how it was called.
+- *Why mock `fetch()`*: real requests need the server and database running, are slow, and make tests fail for reasons unrelated to our code. A mocked `fetch` makes tests fast and repeatable, and lets us test the error paths (500, network down) on demand.
+
 ## Prerequisites
 Node.js (LTS), npm, Docker Desktop, and the two data files `rets_property.sql` and
 `rets_openhouse.sql` (not included in this repo; obtain them from your IDX Exchange contact).
