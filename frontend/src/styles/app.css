@@ -831,6 +831,18 @@
   margin-bottom: 4px;
 }
 
+/* Week 6 filter form on /listings */
+.lp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.lp-filters .field {
+  width: 150px;
+}
+
 .lp-count {
   color: var(--ink-soft);
   font-size: 14px;

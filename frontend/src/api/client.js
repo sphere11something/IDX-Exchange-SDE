@@ -8,12 +8,14 @@ const BASE = '/api'
  * Turn any failure (network down, non-2xx status, bad JSON) into an Error with a
  * message that is safe to show to the user.
  */
-async function request(path, params) {
+async function request(path, params, options = {}) {
   const qs = params ? '?' + new URLSearchParams(params) : ''
   let res
   try {
-    res = await fetch(`${BASE}${path}${qs}`)
-  } catch {
+    res = await fetch(`${BASE}${path}${qs}`, options)
+  } catch (err) {
+    // An aborted request is intentional (a newer search replaced it), not a failure to report.
+    if (err?.name === 'AbortError') throw err
     // fetch() only rejects on network-level failures, e.g. the backend is not running.
     throw new Error('Unable to reach the server. Please check that the backend is running.')
   }
@@ -39,12 +41,19 @@ async function request(path, params) {
   }
 }
 
-// Drop empty values so the backend never receives e.g. ?beds=
-const clean = (params = {}) =>
-  Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null))
+// Drop empty values (including whitespace-only strings) so the backend never receives e.g. ?beds=
+export const clean = (params = {}) =>
+  Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v != null && String(v).trim() !== '')
+      .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
+  )
 
-/** GET /api/properties -> { total, limit, offset, results, page, pages } */
-export const fetchProperties = (params) => request('/properties', clean(params))
+/**
+ * GET /api/properties -> { total, limit, offset, results, page, pages }
+ * `options` is passed to fetch(), e.g. { signal } so a stale request can be aborted.
+ */
+export const fetchProperties = (params, options) => request('/properties', clean(params), options)
 
 /** GET /api/properties/:id -> full property object (throws a 404 message for unknown ids) */
 export const fetchPropertyDetail = (id) => request(`/properties/${encodeURIComponent(id)}`)
