@@ -1,4 +1,4 @@
-/** Small shared pieces: loading, failure, filter controls, pagination. */
+/** Small shared pieces: loading, failure, filter controls. (Pagination lives in components/Pagination.jsx.) */
 
 export const Spinner = () => <div className="spin" role="status" aria-label="Loading" />
 
@@ -90,26 +90,5 @@ export function FilterBar({ values, onChange, onSubmit, category }) {
         <button className="btn">Search</button>
       </div>
     </form>
-  )
-}
-
-export function Pager({ page, pages, onGo }) {
-  if (!pages || pages < 2) return null
-  return (
-    <div className="pager">
-      <button className="btn btn--quiet btn--sm" disabled={page <= 1} onClick={() => onGo(page - 1)}>
-        Previous
-      </button>
-      <span className="num">
-        Page {page} of {pages.toLocaleString()}
-      </span>
-      <button
-        className="btn btn--quiet btn--sm"
-        disabled={page >= pages}
-        onClick={() => onGo(page + 1)}
-      >
-        Next
-      </button>
-    </div>
   )
 }

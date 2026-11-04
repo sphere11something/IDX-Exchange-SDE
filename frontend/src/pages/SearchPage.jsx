@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import Shell from '../ui/Chrome.jsx'
-import { FilterBar, Loading, Notice, Pager } from '../ui/bits.jsx'
+import { FilterBar, Loading, Notice } from '../ui/bits.jsx'
+import Pagination from '../components/Pagination.jsx'
 import PropertyCard from '../components/PropertyCard.jsx'
 import MapView from '../MapView.jsx'
 import { fetchProperties } from '../api/client.js'
@@ -107,7 +108,7 @@ export default function SearchPage({ category = 'sale' }) {
                   <PropertyCard key={p.id} property={p} base={base} />
                 ))}
               </div>
-              <Pager page={page} pages={data.pages} onGo={goTo} />
+              <Pagination currentPage={page} totalPages={data.pages} onPageChange={goTo} />
             </>
           )}
         </div>
