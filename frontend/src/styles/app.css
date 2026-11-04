@@ -515,16 +515,6 @@
   gap: 20px;
 }
 
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin: 34px 0 8px;
-  font-size: 14px;
-  color: var(--ink-soft);
-}
-
 /* ---------- Map pins ---------- */
 
 .pin {
@@ -906,6 +896,13 @@
     justify-content: center;
     margin: 8px 0 0;
   }
+}
+
+/* The search results column is only about half the screen, so "Go to page" gets its own row. */
+.results__index .pagination__jump {
+  flex-basis: 100%;
+  justify-content: center;
+  margin: 8px 0 0;
 }
 
 /* ---------- Week 6 filter form ---------- */
