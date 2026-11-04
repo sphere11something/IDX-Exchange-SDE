@@ -873,6 +873,41 @@
   user-select: none;
 }
 
+.pagination__jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.pagination__jump-label {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.pagination__jump-input {
+  width: 88px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.pagination__jump-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .pagination__jump {
+    flex-basis: 100%;
+    justify-content: center;
+    margin: 8px 0 0;
+  }
+}
+
 /* ---------- Week 6 filter form ---------- */
 
 .pf {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Pagination from './Pagination.jsx'
 import { ELLIPSIS, getPageNumbers } from '../utils/pagination.js'
 
@@ -237,5 +238,149 @@ describe('Pagination', () => {
 
     rerender(<Pagination currentPage={12} totalPages={24} onPageChange={onPageChange} />)
     expect(visibleItems()).toEqual(['1', '...', '11', '12', '13', '...', '24'])
+  })
+})
+
+describe('Pagination: go to page', () => {
+  const input = () => screen.getByLabelText('Go to page')
+  const goButton = () => screen.getByRole('button', { name: 'Go' })
+  // Type a value into the box and click Go.
+  const jumpTo = (value) => {
+    fireEvent.change(input(), { target: { value } })
+    fireEvent.click(goButton())
+  }
+
+  it('renders a labelled page-number input and a Go button', () => {
+    setup({ currentPage: 1, totalPages: 24 })
+
+    expect(input()).toBeInstanceOf(HTMLInputElement)
+    expect(input()).toHaveAttribute('type', 'number')
+    expect(input()).toHaveAttribute('min', '1')
+    expect(input()).toHaveAttribute('max', '24')
+    expect(goButton()).toBeInTheDocument()
+  })
+
+  it('is not rendered when there is only one page', () => {
+    setup({ totalPages: 1 })
+
+    expect(screen.queryByLabelText('Go to page')).not.toBeInTheDocument()
+  })
+
+  it('typing a page number and clicking Go jumps to that page', () => {
+    const { onPageChange } = setup({ currentPage: 1, totalPages: 24 })
+
+    jumpTo('17')
+
+    expect(onPageChange).toHaveBeenCalledTimes(1)
+    expect(onPageChange).toHaveBeenCalledWith(17)
+  })
+
+  it('pressing Enter in the box jumps to that page', async () => {
+    const user = userEvent.setup()
+    const { onPageChange } = setup({ currentPage: 1, totalPages: 24 })
+
+    await user.type(input(), '9{Enter}')
+
+    expect(onPageChange).toHaveBeenCalledTimes(1)
+    expect(onPageChange).toHaveBeenCalledWith(9)
+  })
+
+  it('clears the box after a successful jump', () => {
+    setup({ currentPage: 1, totalPages: 24 })
+
+    jumpTo('5')
+
+    expect(input()).toHaveValue(null) // empty number input
+  })
+
+  it('accepts the first and last page', () => {
+    const { onPageChange } = setup({ currentPage: 12, totalPages: 24 })
+
+    jumpTo('1')
+    expect(onPageChange).toHaveBeenLastCalledWith(1)
+
+    jumpTo('24')
+    expect(onPageChange).toHaveBeenLastCalledWith(24)
+  })
+
+  it.each([
+    ['zero', '0'],
+    ['a negative number', '-3'],
+    ['one past the last page', '25'],
+    ['a huge number', '99999'],
+    ['a decimal', '2.5'],
+  ])('rejects %s with an error and does not navigate', (_label, value) => {
+    const { onPageChange } = setup({ currentPage: 1, totalPages: 24 })
+
+    jumpTo(value)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a page number from 1 to 24.')
+    expect(onPageChange).not.toHaveBeenCalled()
+    // The typed value stays so the user can correct it.
+    expect(input()).toHaveValue(Number(value))
+    expect(input()).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('rejects an empty box with an error and does not navigate', () => {
+    const { onPageChange } = setup({ currentPage: 1, totalPages: 24 })
+
+    fireEvent.click(goButton())
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(onPageChange).not.toHaveBeenCalled()
+  })
+
+  it('treats non-numeric text as empty and shows an error', () => {
+    const { onPageChange } = setup({ currentPage: 1, totalPages: 24 })
+
+    jumpTo('abc') // a number input discards text that is not a number
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(onPageChange).not.toHaveBeenCalled()
+  })
+
+  it('does nothing (and shows no error) when you jump to the page you are already on', () => {
+    const { onPageChange } = setup({ currentPage: 7, totalPages: 24 })
+
+    jumpTo('7')
+
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(input()).toHaveValue(null)
+  })
+
+  it('clears the error as soon as the user edits the box', () => {
+    setup({ currentPage: 1, totalPages: 24 })
+    jumpTo('99')
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+
+    fireEvent.change(input(), { target: { value: '9' } })
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(input()).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('clears an earlier error after a successful jump', () => {
+    setup({ currentPage: 1, totalPages: 24 })
+    jumpTo('99')
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+
+    jumpTo('3')
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('uses the real number of pages in its limits and error message', () => {
+    const { rerender } = render(
+      <Pagination currentPage={1} totalPages={1500} onPageChange={() => {}} />,
+    )
+    expect(input()).toHaveAttribute('max', '1500')
+
+    fireEvent.change(input(), { target: { value: '1501' } })
+    fireEvent.click(goButton())
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a page number from 1 to 1,500.')
+
+    rerender(<Pagination currentPage={1} totalPages={8} onPageChange={() => {}} />)
+    expect(input()).toHaveAttribute('max', '8')
   })
 })

@@ -110,6 +110,49 @@ describe('ListingsPage pagination', () => {
     expect(scrollTo).toHaveBeenCalledWith(0, 0)
   })
 
+  it('typing a page number in "Go to page" loads that page and scrolls to the top', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await user.type(screen.getByLabelText('Go to page'), '4')
+    await user.click(screen.getByRole('button', { name: 'Go' }))
+
+    expect(await screen.findByText('Showing 61-80 of 100 properties')).toBeInTheDocument()
+    expect(lastParams()).toMatchObject({ limit: 20, offset: 60 })
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    expect(currentPageButton()).toHaveTextContent('4')
+  })
+
+  it('"Go to page" keeps the active filters', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.type(screen.getByLabelText('City'), 'Irvine')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await user.type(screen.getByLabelText('Go to page'), '5{Enter}')
+
+    await screen.findByText('Showing 81-100 of 100 properties')
+    expect(lastParams()).toMatchObject({ city: 'Irvine', limit: 20, offset: 80 })
+  })
+
+  it('"Go to page" with an out-of-range number shows an error and makes no request', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    const callsBefore = fetchProperties.mock.calls.length
+
+    await user.type(screen.getByLabelText('Go to page'), '6')
+    await user.click(screen.getByRole('button', { name: 'Go' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a page number from 1 to 5.')
+    expect(fetchProperties.mock.calls.length).toBe(callsBefore)
+    expect(scrollTo).not.toHaveBeenCalled()
+    expect(screen.getByText('Showing 1-20 of 100 properties')).toBeInTheDocument()
+  })
+
   it('the last page summary shows the real end of a partial page', async () => {
     totalRows = 45
     renderPage()
