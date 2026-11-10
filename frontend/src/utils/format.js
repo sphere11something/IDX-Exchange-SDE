@@ -49,5 +49,22 @@ export const formatDay = (value) =>
     day: 'numeric',
   })
 
+/** "14:00:00" -> "2:00 PM". Returns null for anything that is not a time. */
+export const formatTime = (value) => {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(value ?? ''))
+  if (!match) return null
+  const h = Number(match[1])
+  if (h > 23) return null
+  return `${h % 12 || 12}:${match[2]} ${h >= 12 ? 'PM' : 'AM'}`
+}
+
+/** "11:00:00", "14:00:00" -> "11:00 AM - 2:00 PM"; falls back to whichever end is known. */
+export const formatTimeRange = (start, end) => {
+  const a = formatTime(start)
+  const b = formatTime(end)
+  if (a && b) return `${a} - ${b}`
+  return a || b || null
+}
+
 /** "SingleFamilyResidence" -> "Single Family Residence" */
 export const formatType = (type) => type?.replace(/([A-Z])/g, ' $1').trim() || null
