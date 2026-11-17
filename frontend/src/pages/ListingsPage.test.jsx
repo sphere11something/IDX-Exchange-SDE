@@ -257,3 +257,143 @@ describe('ListingsPage pagination', () => {
     expect(lastParams()).toMatchObject({ offset: 20 })
   })
 })
+
+describe('ListingsPage sorting (Week 9)', () => {
+  const sortSelect = () => screen.getByLabelText('Sort by')
+
+  it('sends no sort params until the user picks one', async () => {
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    expect(sortSelect()).toHaveValue('')
+    expect(lastParams()).not.toHaveProperty('sortBy')
+    expect(lastParams()).not.toHaveProperty('sortOrder')
+  })
+
+  it('price low to high and high to low send the real SQL column name and the right order', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await user.selectOptions(sortSelect(), 'Price: low to high')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_SystemPrice', sortOrder: 'asc' }))
+
+    await user.selectOptions(sortSelect(), 'Price: high to low')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_SystemPrice', sortOrder: 'desc' }))
+  })
+
+  it('date listed, square feet and beds each map to their column', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await user.selectOptions(sortSelect(), 'Date listed: newest first')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_ListingDate', sortOrder: 'desc' }))
+    await user.selectOptions(sortSelect(), 'Square feet: largest first')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'LM_Int2_3', sortOrder: 'desc' }))
+    await user.selectOptions(sortSelect(), 'Beds: fewest first')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_Keyword2', sortOrder: 'asc' }))
+  })
+
+  it('the sort persists when the page changes', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.selectOptions(sortSelect(), 'Price: low to high')
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await user.click(screen.getByRole('button', { name: 'Page 3' }))
+
+    await screen.findByText('Showing 41-60 of 100 properties')
+    expect(lastParams()).toMatchObject({ sortBy: 'L_SystemPrice', sortOrder: 'asc', offset: 40 })
+    expect(sortSelect()).toHaveValue('price-asc')
+
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText('Showing 61-80 of 100 properties')
+    expect(lastParams()).toMatchObject({ sortBy: 'L_SystemPrice', sortOrder: 'asc', offset: 60 })
+  })
+
+  it('changing the sort goes back to page 1 and keeps the filters', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.type(screen.getByLabelText('City'), 'Irvine')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.click(screen.getByRole('button', { name: 'Page 3' }))
+    await screen.findByText('Showing 41-60 of 100 properties')
+
+    await user.selectOptions(sortSelect(), 'Beds: most first')
+
+    await screen.findByText('Showing 1-20 of 100 properties')
+    expect(lastParams()).toMatchObject({ city: 'Irvine', sortBy: 'L_Keyword2', sortOrder: 'desc', offset: 0 })
+  })
+
+  it('the sort resets to the default when new filters are applied', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.selectOptions(sortSelect(), 'Price: high to low')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_SystemPrice' }))
+    await user.click(screen.getByRole('button', { name: 'Page 2' }))
+    await screen.findByText('Showing 21-40 of 100 properties')
+
+    await user.type(screen.getByLabelText('City'), 'Tustin')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+
+    await screen.findByText('Showing 1-20 of 100 properties')
+    expect(sortSelect()).toHaveValue('')
+    expect(lastParams()).toMatchObject({ city: 'Tustin', offset: 0 })
+    expect(lastParams()).not.toHaveProperty('sortBy')
+    expect(lastParams()).not.toHaveProperty('sortOrder')
+  })
+
+  it('Clear Filters also resets the sort', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.selectOptions(sortSelect(), 'Square feet: smallest first')
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'LM_Int2_3' }))
+
+    await user.click(screen.getByRole('button', { name: 'Clear Filters' }))
+
+    await waitFor(() => expect(sortSelect()).toHaveValue(''))
+    await waitFor(() => expect(lastParams()).not.toHaveProperty('sortBy'))
+  })
+
+  it('applying filters while sorted and on a later page still makes a single request', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.selectOptions(sortSelect(), 'Price: low to high')
+    await screen.findByText('Showing 1-20 of 100 properties')
+    await user.click(screen.getByRole('button', { name: 'Page 3' }))
+    await screen.findByText('Showing 41-60 of 100 properties')
+    const callsBefore = fetchProperties.mock.calls.length
+
+    await user.type(screen.getByLabelText('City'), 'Tustin')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    await screen.findByText('Showing 1-20 of 100 properties')
+
+    await waitFor(() => expect(fetchProperties.mock.calls.length).toBe(callsBefore + 1))
+    expect(lastParams()).toMatchObject({ city: 'Tustin', offset: 0 })
+  })
+
+  it('keeps the sort dropdown on screen while results are loading', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Showing 1-20 of 100 properties')
+    // Hold the next response open so the page is in its loading state.
+    let release
+    fetchProperties.mockImplementationOnce(
+      () => new Promise((resolve) => { release = () => resolve({ total: 100, limit: 20, offset: 0, results: [listing(1)] }) }),
+    )
+
+    await user.selectOptions(sortSelect(), 'Price: low to high')
+
+    expect(await screen.findByText('Loading properties')).toBeInTheDocument()
+    expect(sortSelect()).toBeInTheDocument()
+    release()
+    await screen.findByText('Showing 1-1 of 100 properties')
+  })
+})

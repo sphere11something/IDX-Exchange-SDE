@@ -1158,6 +1158,60 @@
   gap: 8px;
 }
 
+/* ---------- Week 9: error boundary recovery screen ---------- */
+
+.eb {
+  max-width: 640px;
+  margin: 80px auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  gap: 14px;
+}
+
+.eb__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eb__details {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.eb__details pre {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Week 9: sort bar (count on the left, sort control on the right) ---------- */
+
+.lp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-bar .lp-count {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.sortc .select {
+  min-width: 230px;
+}
+
+.sortc .label {
+  margin-bottom: 4px;
+}
+
 @media (max-width: 900px) {
   .pf__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

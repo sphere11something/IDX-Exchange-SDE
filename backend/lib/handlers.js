@@ -1,6 +1,6 @@
 'use strict';
 // Handler factories take the pool as an argument so tests can pass a fake one.
-const { SORTS, RENTAL_TYPES, SUMMARY, parsePhotos, parseQuery, parseListingId, buildWhere } = require('./propertyQuery');
+const { RENTAL_TYPES, SUMMARY, parsePhotos, parseQuery, parseListingId, buildWhere, buildOrderBy } = require('./propertyQuery');
 
 const badRequest = (res, errors) =>
   res.status(400).json({ error: 'Invalid query parameters', details: errors });
@@ -12,14 +12,15 @@ const badId = (res, message) =>
 const listProperties = (pool) => async (req, res) => {
   const { errors, params } = parseQuery(req.query);
   if (errors.length) return badRequest(res, errors);
-  const { limit, offset, sort, filters } = params;
+  const { limit, offset, filters } = params;
 
   try {
     const { where, args } = buildWhere(filters);
+    const orderBy = buildOrderBy(params);
     // Same where + args for BOTH queries, so `total` always matches the filtered result set.
     const [[{ total }]] = await pool.query(`SELECT COUNT(*) total FROM rets_property WHERE ${where}`, args);
     const [rows] = await pool.query(
-      `SELECT ${SUMMARY} FROM rets_property WHERE ${where} ORDER BY ${SORTS[sort]} LIMIT ? OFFSET ?`,
+      `SELECT ${SUMMARY} FROM rets_property WHERE ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       [...args, limit, offset]);
     rows.forEach((r) => { r.photos = parsePhotos(r.photos).slice(0, 1); r.forRent = RENTAL_TYPES.includes(r.type); });
     // `page`/`pages` are extras kept for the existing frontend pager.

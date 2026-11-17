@@ -3,6 +3,8 @@ import { fetchProperties } from '../api/client.js'
 import Pagination from '../components/Pagination.jsx'
 import PropertyCard from '../components/PropertyCard.jsx'
 import PropertyFilters from '../components/PropertyFilters.jsx'
+import SortControls from '../components/SortControls.jsx'
+import { DEFAULT_SORT, sortParams } from '../utils/sort.js'
 import Shell from '../ui/Chrome.jsx'
 import { Loading, Notice } from '../ui/bits.jsx'
 
@@ -15,6 +17,9 @@ export default function ListingsPage() {
   // The filters that were last submitted. The form keeps its own draft state, so typing
   // does not fetch anything; only Search / Clear Filters change this object.
   const [filters, setFilters] = useState({})
+  // Week 9 sort: a SORT_OPTIONS value ('' = default). It survives page changes but is reset
+  // whenever new filters are applied (see search / clear below).
+  const [sort, setSort] = useState(DEFAULT_SORT)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
   const [attempt, setAttempt] = useState(0) // bumping this re-runs the fetch (Retry button)
@@ -30,7 +35,7 @@ export default function ListingsPage() {
     setLoading(true)
     setError(null)
     fetchProperties(
-      { ...filters, limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage },
+      { ...filters, ...sortParams(sort), limit: itemsPerPage, offset: (currentPage - 1) * itemsPerPage },
       { signal: controller.signal },
     )
       .then((d) => { if (!isStale()) setData(d) })
@@ -38,21 +43,29 @@ export default function ListingsPage() {
       .finally(() => { if (!isStale()) setLoading(false) })
 
     return () => controller.abort()
-  }, [filters, currentPage, itemsPerPage, attempt])
+  }, [filters, sort, currentPage, itemsPerPage, attempt])
 
-  // Changing filters always goes back to page 1. Both updates are batched into one render,
-  // so this triggers a single request rather than one for the old page and one for page 1.
+  // Changing filters always goes back to page 1 AND resets the sort to the default. All the
+  // updates are batched into one render, so this triggers a single request rather than one for
+  // the old page and one for page 1.
   const search = useCallback((next) => {
     setFilters(next)
+    setSort(DEFAULT_SORT)
     setCurrentPage(1)
   }, [])
   const clear = useCallback(() => {
     setFilters({})
+    setSort(DEFAULT_SORT)
+    setCurrentPage(1)
+  }, [])
+  // Picking a new sort starts from page 1 of the re-ordered results; the filters are kept.
+  const changeSort = useCallback((next) => {
+    setSort(next)
     setCurrentPage(1)
   }, [])
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
-  // Filters stay in state while the page changes, so they are preserved automatically.
+  // Filters and sort stay in state while the page changes, so both are preserved automatically.
   const goToPage = useCallback((page) => {
     setCurrentPage(page)
     window.scrollTo(0, 0)
@@ -80,6 +93,20 @@ export default function ListingsPage() {
 
         <PropertyFilters onSearch={search} onClear={clear} />
 
+        {/* The bar stays mounted while results load, so the sort dropdown keeps keyboard focus. */}
+        <div className="lp-bar">
+          {!loading && !error && data ? (
+            <p className="lp-count num">
+              {data.results.length > 0
+                ? `Showing ${firstShown.toLocaleString()}-${lastShown.toLocaleString()} of ${total.toLocaleString()} properties`
+                : `Showing 0 of ${total.toLocaleString()} properties`}
+            </p>
+          ) : (
+            <span />
+          )}
+          <SortControls value={sort} onChange={changeSort} />
+        </div>
+
         {loading && <Loading>Loading properties</Loading>}
 
         {!loading && error && (
@@ -88,11 +115,6 @@ export default function ListingsPage() {
 
         {!loading && !error && data && (
           <>
-            <p className="lp-count num">
-              {data.results.length > 0
-                ? `Showing ${firstShown.toLocaleString()}-${lastShown.toLocaleString()} of ${total.toLocaleString()} properties`
-                : `Showing 0 of ${total.toLocaleString()} properties`}
-            </p>
             {data.results.length === 0 ? (
               <p className="status" role="status">
                 {hasFilters

@@ -1,4 +1,5 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import HomePage from './pages/HomePage.jsx'
 import SearchPage from './pages/SearchPage.jsx'
 import DetailPage from './pages/DetailPage.jsx'
@@ -19,11 +20,16 @@ const tree = (prefix, searchPath) => (
 )
 
 export default function App() {
+  const { pathname } = useLocation()
   return (
-    <Routes>
-      <Route path="/listings" element={<ListingsPage />} />
-      {tree('', '/for-sale')}
-      {tree(DARK_BASE, '/homes')}
-    </Routes>
+    // A render error on one page shows a recovery screen instead of a blank app. The boundary
+    // resets whenever the path changes, so navigating away from a broken page works.
+    <ErrorBoundary resetKey={pathname}>
+      <Routes>
+        <Route path="/listings" element={<ListingsPage />} />
+        {tree('', '/for-sale')}
+        {tree(DARK_BASE, '/homes')}
+      </Routes>
+    </ErrorBoundary>
   )
 }

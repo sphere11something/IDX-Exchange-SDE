@@ -17,7 +17,7 @@ export default function MapView({ params, base = '' }) {
     const n = new URLSearchParams(params); n.delete('page'); n.delete('sort')
     let live = true
     fetch('/api/properties/map?' + n).then((r) => r.json()).then((rows) => {
-      if (!live) return
+      if (!live || !Array.isArray(rows)) return
       layer.current.clearLayers()
       const pts = []
       rows.forEach((p) => {
@@ -27,6 +27,9 @@ export default function MapView({ params, base = '' }) {
       })
       map.current.invalidateSize()
       if (pts.length) map.current.fitBounds(pts, { padding: [40, 40], maxZoom: 15 })
+    }).catch(() => {
+      // Backend down or non-JSON reply: leave the map empty instead of an "Uncaught (in promise)"
+      // console error. The listing column already shows its own error notice.
     })
     return () => { live = false }
   }, [params.toString()])
