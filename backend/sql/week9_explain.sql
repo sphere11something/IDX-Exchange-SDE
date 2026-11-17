@@ -68,7 +68,7 @@ LIMIT 20;
 --    (see step 0a) in this file, backend/lib/propertyQuery.js and frontend/src/utils/sort.js.
 EXPLAIN SELECT L_ListingID FROM rets_property
 WHERE L_Status = 'Active'
-ORDER BY (L_ListingDate IS NULL) ASC, L_ListingDate DESC, L_ListingID DESC
+ORDER BY (ListingContractDate IS NULL) ASC, ListingContractDate DESC, L_ListingID DESC
 LIMIT 20;
 
 -- 6. Rentals only (category=rent) sorted by price.

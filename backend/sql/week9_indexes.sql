@@ -21,9 +21,9 @@ CREATE INDEX idx_rets_property_status_city_beds
 CREATE INDEX idx_rets_property_status_sqft
   ON rets_property (L_Status, LM_Int2_3);
 
--- sortBy=L_ListingDate (date listed). Change the column if week9_explain.sql step 0a shows another name.
+-- sortBy=ListingContractDate (date listed). Column name confirmed with SHOW COLUMNS.
 CREATE INDEX idx_rets_property_status_listed
-  ON rets_property (L_Status, L_ListingDate);
+  ON rets_property (L_Status, ListingContractDate);
 
 -- nextOpen subquery runs once per returned listing, filtering rets_openhouse by listing id + date.
 -- Skip this one if SHOW INDEXES FROM rets_openhouse already shows an index leading with L_ListingID.

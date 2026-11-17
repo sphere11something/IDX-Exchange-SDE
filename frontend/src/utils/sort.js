@@ -1,9 +1,9 @@
 // Sort options for the listings page (Week 9, Option 1).
 // `sortBy` values are the ACTUAL rets_property column names the backend whitelists
 // (backend/lib/propertyQuery.js SORT_COLUMNS), not RESO names like ListPrice. If your date
-// column is not L_ListingDate, change it here and in LISTED_DATE_COLUMN on the backend.
+// column is not ListingContractDate, change it here and in LISTED_DATE_COLUMN on the backend.
 
-export const LISTED_DATE_COLUMN = 'L_ListingDate'
+export const LISTED_DATE_COLUMN = 'ListingContractDate'
 
 // The "no sort chosen" state. compactSort() turns it into no query params at all, so the
 // backend falls back to its default order (newest listing id first).
