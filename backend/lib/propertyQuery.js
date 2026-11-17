@@ -12,6 +12,27 @@ const SORTS = {
   price_desc: 'L_SystemPrice DESC, L_ListingID DESC',
 };
 
+// ---- Week 9: ?sortBy=&sortOrder= ---------------------------------------------------------
+// The whitelist keys are the REAL rets_property column names, not RESO names (ListPrice,
+// LivingArea, ...). A RESO name would not be in this list, so it is rejected with a 400
+// instead of reaching MySQL and failing or silently not sorting.
+//
+// VERIFY LISTED_DATE_COLUMN against your table before relying on the date sort:
+//   SHOW COLUMNS FROM rets_property LIKE '%Date%';
+// The frontend sends this same string (frontend/src/utils/sort.js); change both together.
+const LISTED_DATE_COLUMN = 'L_ListingDate';
+
+// zeroIsMissing: price and sqft use 0 for "unknown" in this feed (the UI shows "Price
+// unavailable"), so 0 is pushed to the end instead of sitting at the top of "low to high".
+const SORT_COLUMNS = {
+  L_SystemPrice: { zeroIsMissing: true },   // price
+  [LISTED_DATE_COLUMN]: {},                 // date listed
+  LM_Int2_3: { zeroIsMissing: true },       // square footage
+  L_Keyword2: {},                           // beds
+};
+const SORT_ORDERS = ['asc', 'desc'];
+const DEFAULT_SORT_ORDER = 'asc';
+
 // Lease listings are identified by L_Type_; configurable via RENTAL_PROPERTY_TYPES.
 const RENTAL_TYPES = (process.env.RENTAL_PROPERTY_TYPES || 'ResidentialLease,Apartment')
   .split(',').map((s) => s.trim()).filter(Boolean);
@@ -116,9 +137,37 @@ function parseQuery(query = {}) {
     errors.push('minPrice cannot be greater than maxPrice');
   }
 
+  // Legacy named sort (used by the Search and Home pages). Still supported; sortBy wins if both are sent.
   const sort = oneOf('sort', Object.keys(SORTS)) || 'newest';
 
-  return { errors, params: { limit, offset, sort, filters } };
+  // Week 9 sort: sortBy is an actual SQL column name from the whitelist; sortOrder is asc|desc
+  // (any casing). sortOrder on its own is validated but has nothing to apply to.
+  const sortBy = oneOf('sortBy', Object.keys(SORT_COLUMNS));
+  const rawOrder = raw('sortOrder');
+  let sortOrder = DEFAULT_SORT_ORDER;
+  if (rawOrder !== undefined) {
+    if (SORT_ORDERS.includes(rawOrder.toLowerCase())) sortOrder = rawOrder.toLowerCase();
+    else errors.push(`sortOrder must be one of: ${SORT_ORDERS.join(', ')}`);
+  }
+
+  return { errors, params: { limit, offset, sort, sortBy, sortOrder, filters } };
+}
+
+/**
+ * ORDER BY text for the list query. ORDER BY cannot be parameterised, so the only thing that
+ * ever becomes SQL here is a whitelist entry or a fixed keyword; user input only selects a key.
+ * Rows with a missing value (NULL, or 0 where zeroIsMissing) always sort last, and L_ListingID
+ * breaks ties so pages never overlap or skip rows.
+ */
+function buildOrderBy({ sort = 'newest', sortBy, sortOrder = DEFAULT_SORT_ORDER } = {}) {
+  if (sortBy === undefined) return SORTS[sort] || SORTS.newest;
+  // Belt and braces: parseQuery already validated, but this function must be safe on its own.
+  if (!Object.keys(SORT_COLUMNS).includes(sortBy)) throw new Error(`sortBy not allowed: ${String(sortBy)}`);
+  const dir = String(sortOrder).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+  const missing = SORT_COLUMNS[sortBy].zeroIsMissing
+    ? `(${sortBy} IS NULL OR ${sortBy} = 0)`
+    : `(${sortBy} IS NULL)`;
+  return `${missing} ASC, ${sortBy} ${dir}, L_ListingID ${dir}`;
 }
 
 /**
@@ -156,6 +205,7 @@ function buildWhere(filters = {}, rentalTypes = RENTAL_TYPES) {
 }
 
 module.exports = {
-  DEFAULT_LIMIT, MAX_LIMIT, MAX_ID_LENGTH, SORTS, RENTAL_TYPES, SUMMARY,
-  parsePhotos, parseQuery, parseListingId, buildWhere,
+  DEFAULT_LIMIT, MAX_LIMIT, MAX_ID_LENGTH, SORTS, SORT_COLUMNS, SORT_ORDERS, LISTED_DATE_COLUMN,
+  RENTAL_TYPES, SUMMARY,
+  parsePhotos, parseQuery, parseListingId, buildWhere, buildOrderBy,
 };

@@ -54,6 +54,17 @@ A plain grid of property cards, built per the Week 5 requirements of the challen
 - *Mocking*: replacing a real dependency with a stand-in you control (`vi.fn()`, which is Jest's `jest.fn()`), so a test decides what the dependency returns and can check how it was called.
 - *Why mock `fetch()`*: real requests need the server and database running, are slow, and make tests fail for reasons unrelated to our code. A mocked `fetch` makes tests fast and repeatable, and lets us test the error paths (500, network down) on demand.
 
+## Week 9: Sorting (Option 1) + performance
+**Sorting on `/listings`.** A "Sort by" dropdown next to the result count: price, date listed, square feet and beds, each in both directions.
+- `GET /api/properties?sortBy=L_SystemPrice&sortOrder=desc` - `sortBy` is checked against a whitelist of **real SQL column names** in `backend/lib/propertyQuery.js` (`SORT_COLUMNS`). `ORDER BY` cannot be parameterised, so user input only ever *selects* a whitelist entry; it is never put into the SQL. An invalid `sortBy` or `sortOrder` returns `400 { error, details }` and never reaches MySQL.
+- Rows with no value (NULL, or 0 price / sqft) always sort last, and `L_ListingID` breaks ties so pages never overlap.
+- Frontend (`ListingsPage.jsx`, `components/SortControls.jsx`, `utils/sort.js`): the sort lives in page state, so it **persists across page changes**; applying or clearing filters **resets it to the default**. Choosing a new sort goes back to page 1 and keeps the filters.
+- **Check before demoing:** the date-listed column is `L_ListingDate` (`LISTED_DATE_COLUMN` in `propertyQuery.js` and `utils/sort.js`). Confirm with `SHOW COLUMNS FROM rets_property LIKE '%Date%';` and change both places if it differs.
+- Tests: `backend/test/week9.test.js`, `frontend/src/utils/sort.test.js`, `components/SortControls.test.jsx`, and a "sorting" block in `pages/ListingsPage.test.jsx`.
+
+**Performance.** EXPLAIN notes, new indexes, request timing, the React Error Boundary and the console-warning review are in
+[`backend/docs/week9-performance.md`](backend/docs/week9-performance.md); SQL in `backend/sql/week9_explain.sql` and `backend/sql/week9_indexes.sql`.
+
 ## Prerequisites
 Node.js (LTS), npm, Docker Desktop, and the two data files `rets_property.sql` and
 `rets_openhouse.sql` (not included in this repo; obtain them from your IDX Exchange contact).
@@ -96,7 +107,9 @@ GET /api/properties?city=Irvine&minPrice=300000&beds=3&limit=20&offset=0
 | `zipcode` | 5 digits |
 | `minPrice`, `maxPrice` | non-negative numbers, `minPrice <= maxPrice` |
 | `beds`, `baths` | minimums (`>=`) |
-| `sort` | `newest` (default), `price_asc`, `price_desc` |
+| `sort` | `newest` (default), `price_asc`, `price_desc` (older named sort, still supported) |
+| `sortBy` | Week 9. An actual `rets_property` column: `L_SystemPrice`, `L_ListingDate`, `LM_Int2_3` (sq ft), `L_Keyword2` (beds). Anything else (including RESO names like `ListPrice`) is a 400. Overrides `sort`. |
+| `sortOrder` | Week 9. `asc` (default) or `desc`, any casing. |
 
 Invalid input returns `400 { "error": "Invalid query parameters", "details": ["limit must be between 1 and 100", ...] }`.
 Indexes: `backend/sql/week3_indexes.sql`; EXPLAIN notes: `backend/docs/week3-explain.md`.
