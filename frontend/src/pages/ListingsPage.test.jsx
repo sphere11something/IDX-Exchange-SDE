@@ -288,7 +288,7 @@ describe('ListingsPage sorting (Week 9)', () => {
     await screen.findByText('Showing 1-20 of 100 properties')
 
     await user.selectOptions(sortSelect(), 'Date listed: newest first')
-    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'L_ListingDate', sortOrder: 'desc' }))
+    await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'ListingContractDate', sortOrder: 'desc' }))
     await user.selectOptions(sortSelect(), 'Square feet: largest first')
     await waitFor(() => expect(lastParams()).toMatchObject({ sortBy: 'LM_Int2_3', sortOrder: 'desc' }))
     await user.selectOptions(sortSelect(), 'Beds: fewest first')

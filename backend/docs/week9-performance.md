@@ -57,7 +57,7 @@ Run order: `week3_indexes.sql` (already in the repo), then `week9_explain.sql` (
 | `idx_rets_property_status_type_price (L_Status, L_Type_, L_SystemPrice)` | `category=rent/sale`, `type=` filters, price sort within them | Equality columns first, price last. |
 | `idx_rets_property_status_city_beds (L_Status, LOWER(TRIM(L_City)), L_Keyword2)` | "3 bed in Irvine", the most common two-filter combo | Functional index on the same expression `buildWhere()` uses, otherwise it cannot be matched. |
 | `idx_rets_property_status_sqft (L_Status, LM_Int2_3)` | `sortBy=LM_Int2_3` | |
-| `idx_rets_property_status_listed (L_Status, L_ListingDate)` | `sortBy=L_ListingDate` | Confirm the column name first (`week9_explain.sql` step 0a). |
+| `idx_rets_property_status_listed (L_Status, ListingContractDate)` | `sortBy=ListingContractDate` | Column confirmed with `SHOW COLUMNS`. |
 | `idx_rets_openhouse_listing_date (L_ListingID, OpenHouseDate)` | The `nextOpen` subquery, once per listing on every page | Skip if `rets_openhouse` already has an index leading with `L_ListingID`. |
 
 Sorting by beds reuses the Week 3 `idx_rets_property_status_beds_baths` (leading columns `L_Status, L_Keyword2`).

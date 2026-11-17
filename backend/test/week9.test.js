@@ -55,7 +55,7 @@ test('every whitelisted column is accepted', () => {
 
 test('RESO names, wrong casing, injection and non-strings are rejected', () => {
   const bad = [
-    'ListPrice', 'LivingArea', 'BedroomsTotal', 'ListingContractDate', 'price', 'newest',
+    'ListPrice', 'LivingArea', 'BedroomsTotal', 'L_ListingDate', 'OnMarketDate', 'price', 'newest',
     'l_systemprice', 'L_SystemPrice ', 'L_SystemPrice; DROP TABLE rets_property',
     'L_SystemPrice, SLEEP(5)', '(SELECT 1)', 'constructor', '__proto__', 'toString',
   ];

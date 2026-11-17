@@ -17,10 +17,10 @@ const SORTS = {
 // LivingArea, ...). A RESO name would not be in this list, so it is rejected with a 400
 // instead of reaching MySQL and failing or silently not sorting.
 //
-// VERIFY LISTED_DATE_COLUMN against your table before relying on the date sort:
-//   SHOW COLUMNS FROM rets_property LIKE '%Date%';
+// Confirmed against the real table with SHOW COLUMNS FROM rets_property LIKE '%Date%'
+// (a `date` column; OnMarketDate / BackOnMarketDate also exist but are not "date listed").
 // The frontend sends this same string (frontend/src/utils/sort.js); change both together.
-const LISTED_DATE_COLUMN = 'L_ListingDate';
+const LISTED_DATE_COLUMN = 'ListingContractDate';
 
 // zeroIsMissing: price and sqft use 0 for "unknown" in this feed (the UI shows "Price
 // unavailable"), so 0 is pushed to the end instead of sitting at the top of "low to high".
