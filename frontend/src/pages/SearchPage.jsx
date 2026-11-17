@@ -7,9 +7,10 @@ import PropertyCard from '../components/PropertyCard.jsx'
 import MapView from '../MapView.jsx'
 import { fetchProperties } from '../api/client.js'
 import { baseOf, styleOf } from '../site.js'
+import { SORT_OPTIONS } from '../utils/sort.js'
 
 const DEFAULT_PLACE = 'Los Angeles'
-const FILTER_KEYS = ['q', 'minPrice', 'maxPrice', 'beds', 'baths', 'type', 'sort']
+const FILTER_KEYS = ['q', 'minPrice', 'maxPrice', 'beds', 'baths', 'type']
 
 /** /for-sale, /rent and their dark-style twins. One layout, two categories. */
 export default function SearchPage({ category = 'sale' }) {
@@ -47,9 +48,17 @@ export default function SearchPage({ category = 'sale' }) {
     }
   }, [query])
 
+  // The sort is kept in the URL as sortBy/sortOrder, so it is shared with the list AND survives a new search.
+  const sortBySp = sp.get('sortBy')
+  const sortOrderSp = sp.get('sortOrder')
+  const sortValue =
+    SORT_OPTIONS.find((o) => o.sortBy === sortBySp && o.sortOrder === sortOrderSp)?.value ?? ''
+
   const submit = (e) => {
     e.preventDefault()
-    setSp(Object.fromEntries(Object.entries(filters).filter(([, v]) => v)))
+    const next = Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
+    if (sortBySp && sortOrderSp) Object.assign(next, { sortBy: sortBySp, sortOrder: sortOrderSp })
+    setSp(next)
   }
 
   const goTo = (p) => {
@@ -59,12 +68,18 @@ export default function SearchPage({ category = 'sale' }) {
     window.scrollTo(0, 0)
   }
 
-  const sortBy = (e) => {
-    const value = e.target.value
-    setFilters({ ...filters, sort: value })
+  const changeSort = (e) => {
+    const option = SORT_OPTIONS.find((o) => o.value === e.target.value)
     const next = new URLSearchParams(sp)
-    if (value) next.set('sort', value)
-    else next.delete('sort')
+    next.delete('sort') // drop the old named sort so it cannot fight with sortBy
+    next.delete('page') // a new order starts from page 1
+    if (option) {
+      next.set('sortBy', option.sortBy)
+      next.set('sortOrder', option.sortOrder)
+    } else {
+      next.delete('sortBy')
+      next.delete('sortOrder')
+    }
     setSp(next)
   }
 
@@ -85,10 +100,13 @@ export default function SearchPage({ category = 'sale' }) {
             <span className="num">
               {data ? `${data.total.toLocaleString()} matching listings` : 'Counting listings'}
             </span>
-            <select className="select" value={filters.sort} onChange={sortBy} aria-label="Sort">
-              <option value="">Newest first</option>
-              <option value="price_asc">{money}, low to high</option>
-              <option value="price_desc">{money}, high to low</option>
+            <select className="select" value={sortValue} onChange={changeSort} aria-label="Sort">
+              <option value="">Default</option>
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label.replace(/^Price/, money)}
+                </option>
+              ))}
             </select>
           </div>
 

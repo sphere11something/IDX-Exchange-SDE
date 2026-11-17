@@ -14,7 +14,7 @@ export default function MapView({ params, base = '' }) {
     return () => map.current.remove()
   }, [])
   useEffect(() => {
-    const n = new URLSearchParams(params); n.delete('page'); n.delete('sort')
+    const n = new URLSearchParams(params); n.delete('page'); n.delete('sort'); n.delete('sortBy'); n.delete('sortOrder')
     let live = true
     fetch('/api/properties/map?' + n).then((r) => r.json()).then((rows) => {
       if (!live || !Array.isArray(rows)) return
